@@ -63,17 +63,16 @@ const userSchema = new Schema(
   },
 );
 
-userSchema.pre("save", async function (next) {
-  if (!this.isModified("password")) return next();
+userSchema.pre("save", async function () {
+  if (!this.isModified("password")) return;
   this.password = await bcrypt.hash(this.password, 10);
-  next();
 });
 
 userSchema.methods.isPasswordCorrect = async function (password) {
   return bcrypt.compare(password, this.password);
 };
 
-userSchema.method.generateAccessToken = function () {
+userSchema.methods.generateAccessToken = function () {
   return jwt.sign(
     {
       _id: this._id,
@@ -85,7 +84,7 @@ userSchema.method.generateAccessToken = function () {
   );
 };
 
-userSchema.method.generateRefreshToken = function () {
+userSchema.methods.generateRefreshToken = function () {
   return jwt.sign(
     {
       _id: this._id,
@@ -95,17 +94,16 @@ userSchema.method.generateRefreshToken = function () {
   );
 };
 
-userSchema.method.generateTemporaryToken = function () {
-    const unHashedToken = crypto.randomBytes(20).toString("hex")
+userSchema.methods.generateTemporaryToken = function () {
+  const unHashedToken = crypto.randomBytes(20).toString("hex");
 
-    const hashedToken = crypto
-        .createHash("sha256")
-        .update(unHashedToken)
-        .digest("hex")
-    
-    const tokenExpiry = Date.now() + (20 * 60 * 1000) //20 mins
-    return {unHashedToken, hashedToken, tokenExpiry}
-}
+  const hashedToken = crypto
+    .createHash("sha256")
+    .update(unHashedToken)
+    .digest("hex");
 
+  const tokenExpiry = Date.now() + 20 * 60 * 1000; //20 mins
+  return { unHashedToken, hashedToken, tokenExpiry };
+};
 
 export const User = mongoose.model("User", userSchema);
